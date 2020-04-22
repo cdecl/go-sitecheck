@@ -12,8 +12,8 @@ import (
 
 type Site struct {
 	Url       string `json:"url"`
-	Status    string `json:"status_code"`
-	Duration  string `json:"duration_ms"`
+	Status    int    `json:"status_code"`
+	Duration  int64  `json:"duration_ms"`
 	Timestamp string `json:"timestamp"`
 }
 
@@ -30,7 +30,7 @@ func SiteLog(site Site, json_out bool) {
 		js, _ := json.Marshal(site)
 		fmt.Println(string(js))
 	} else {
-		fmt.Printf("[%s] %5s ms : %s \n", site.Status, site.Duration, site.Url)
+		fmt.Printf("[%d] %5d ms : %s \n", site.Status, site.Duration, site.Url)
 	}
 }
 
@@ -54,7 +54,7 @@ func Visit(url string, threads int, verbose bool, json_out bool) {
 		start := r.Ctx.GetAny(u)
 		if start != nil {
 			duration := time.Now().Sub(start.(time.Time))
-			site := Site{u, fmt.Sprintf("%d", r.StatusCode), fmt.Sprintf("%d", duration.Milliseconds()), time.Now().Format(time.RFC3339)}
+			site := Site{u, r.StatusCode, duration.Milliseconds(), time.Now().Format(time.RFC3339)}
 
 			if u == url {
 				mainSite = site
@@ -70,8 +70,7 @@ func Visit(url string, threads int, verbose bool, json_out bool) {
 	start := time.Now()
 	q.Run(c)
 	duration := time.Now().Sub(start)
-	mainSite.Duration = fmt.Sprintf("%d", duration.Milliseconds())
-	// site := Site{url, "URL", fmt.Sprintf("%d", duration.Milliseconds()), time.Now().Format(time.RFC3339)}
+	mainSite.Duration = duration.Milliseconds()
 
 	SiteLog(mainSite, json_out)
 }
