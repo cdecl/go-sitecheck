@@ -30,7 +30,7 @@ func SiteLog(site Site, json_out bool) {
 		js, _ := json.Marshal(site)
 		fmt.Println(string(js))
 	} else {
-		fmt.Printf("[%d] %5d ms : %s \n", site.Status, site.Duration, site.Url)
+		fmt.Printf("[%3d] %5d ms : %s \n", site.Status, site.Duration, site.Url)
 	}
 }
 
@@ -40,6 +40,7 @@ func Visit(url string, threads int, verbose bool, json_out bool) {
 	q, _ := queue.New(threads, &queue.InMemoryQueueStorage{MaxSize: 1000})
 
 	mainSite := Site{}
+	mainSite.Url = url
 
 	OnHTML("link", "href", c, q)
 	OnHTML("script", "src", c, q)
