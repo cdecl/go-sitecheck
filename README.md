@@ -35,23 +35,23 @@ Usage of ./go-sitecheck:
 
 ```
 $ ./go-sitecheck http://google.co.kr
-[TOT]   421 ms : http://google.co.kr 
+[URL]   421 ms : http://google.co.kr 
 
 $ ./go-sitecheck -v http://google.co.kr
 [200]   103 ms : http://www.google.co.kr/logos/doodles/2020/earth-day-2020-6753651837108357.3-l.png 
 [200]    38 ms : http://www.google.co.kr/textinputassistant/tia.png 
-[TOT]   538 ms : http://google.co.kr 
+[URL]   538 ms : http://google.co.kr 
 
 ./go-sitecheck -t 2 -v http://google.co.kr
 [200]    75 ms : http://www.google.co.kr/textinputassistant/tia.png 
 [200]    98 ms : http://www.google.co.kr/logos/doodles/2020/earth-day-2020-6753651837108357.3-l.png 
-[TOT]   439 ms : http://google.co.kr 
+[URL]   439 ms : http://google.co.kr 
 
 
 $./go-sitecheck -t 4 -v  http://google.co.kr http://daum.net
 [200]   129 ms : http://www.google.co.kr/textinputassistant/tia.png 
 [200]   165 ms : http://www.google.co.kr/logos/doodles/2020/earth-day-2020-6753651837108357.3-l.png 
-[TOT]   505 ms : http://google.co.kr 
+[URL]   505 ms : http://google.co.kr 
 
 [200]    14 ms : https://search.daum.net/OpenSearch.xml 
 [200]    36 ms : https://t1.daumcdn.net/adfit/static/ad.min.js 
@@ -72,7 +72,7 @@ $./go-sitecheck -t 4 -v  http://google.co.kr http://daum.net
 [200]     6 ms : https://img2.daumcdn.net/thumb/C308x188/?fname=https://t1.daumcdn.net/section/oc/d45008c262b24d30b81b2b63f7345d6c 
 [200]     2 ms : https://t1.daumcdn.net/daumtop_deco/images/op/noimg_1x1.png 
 [200]     2 ms : https://t1.daumcdn.net/daumtop_deco/images/top/2017/logo_foot.gif 
-[TOT]  1102 ms : http://daum.net 
+[URL]  1102 ms : http://daum.net 
 
 ```
 
