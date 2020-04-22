@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"time"
@@ -8,6 +9,13 @@ import (
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/queue"
 )
+
+type Site struct {
+	Url       string `json:"url"`
+	Status    string `json:"status_code"`
+	Duration  string `json:"duration_ms"`
+	Timestamp string `json:"timestamp"`
+}
 
 // OnHTML ..
 func OnHTML(tag string, attr string, c *colly.Collector, q *queue.Queue) {
@@ -17,10 +25,21 @@ func OnHTML(tag string, attr string, c *colly.Collector, q *queue.Queue) {
 	})
 }
 
+func SiteLog(site Site, json_out bool) {
+	if json_out {
+		js, _ := json.Marshal(site)
+		fmt.Println(string(js))
+	} else {
+		fmt.Printf("[%s] %5s ms : %s \n", site.Status, site.Duration, site.Url)
+	}
+}
+
 // Visit ..
-func Visit(url string, threads int, verbose bool) {
+func Visit(url string, threads int, verbose bool, json_out bool) {
 	c := colly.NewCollector()
 	q, _ := queue.New(threads, &queue.InMemoryQueueStorage{MaxSize: 1000})
+
+	mainSite := Site{}
 
 	OnHTML("link", "href", c, q)
 	OnHTML("script", "src", c, q)
@@ -31,12 +50,18 @@ func Visit(url string, threads int, verbose bool) {
 	})
 
 	c.OnResponse(func(r *colly.Response) {
-		url := r.Request.URL.String()
-		start := r.Ctx.GetAny(url)
+		u := r.Request.URL.String()
+		start := r.Ctx.GetAny(u)
 		if start != nil {
 			duration := time.Now().Sub(start.(time.Time))
+			site := Site{u, fmt.Sprintf("%d", r.StatusCode), fmt.Sprintf("%d", duration.Milliseconds()), time.Now().Format(time.RFC3339)}
+
+			if u == url {
+				mainSite = site
+			}
+
 			if verbose {
-				fmt.Printf("[%d] %5d ms : %s \n", r.StatusCode, duration.Milliseconds(), url)
+				SiteLog(site, json_out)
 			}
 		}
 	})
@@ -45,21 +70,26 @@ func Visit(url string, threads int, verbose bool) {
 	start := time.Now()
 	q.Run(c)
 	duration := time.Now().Sub(start)
+	mainSite.Duration = fmt.Sprintf("%d", duration.Milliseconds())
+	// site := Site{url, "URL", fmt.Sprintf("%d", duration.Milliseconds()), time.Now().Format(time.RFC3339)}
 
-	fmt.Printf("[URL] %5d ms : %s \n", duration.Milliseconds(), url)
+	SiteLog(mainSite, json_out)
 }
 
 type Args struct {
 	Threads int
 	Verbose bool
+	Json    bool
 	Urls    []string
 }
 
 func usage() (Args, bool) {
-	args := Args{0, false, []string{}}
+	args := Args{}
+	args.Urls = []string{}
 
 	flag.IntVar(&args.Threads, "t", 1, "thread pool count")
 	flag.BoolVar(&args.Verbose, "v", false, "verbose")
+	flag.BoolVar(&args.Json, "json", false, "json output")
 	flag.Parse()
 
 	args.Urls = append(args.Urls, flag.Args()...)
@@ -78,7 +108,7 @@ func main() {
 	}
 
 	for _, url := range args.Urls {
-		Visit(url, args.Threads, args.Verbose)
+		Visit(url, args.Threads, args.Verbose, args.Json)
 
 		if args.Verbose {
 			fmt.Println()
