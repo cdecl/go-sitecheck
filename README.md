@@ -24,55 +24,47 @@ $ go build
 - Usage
 
 ```
-$ ./go-sitecheck
-Usage of ./go-sitecheck:
+$ go-sitecheck
+Usage of go-sitecheck:
+  -json
+        json output
   -t int
-    	thread pool count (default 1)
-  -v	verbose
+        thread pool count (default 1)
+  -v    verbose
 ```
 
 - Run
 
 ```
-$ ./go-sitecheck http://google.co.kr
-[URL]   421 ms : http://google.co.kr 
+$ go-sitecheck http://httpbin.org/
+[200]  1106 ms : http://httpbin.org/
 
-$ ./go-sitecheck -v http://google.co.kr
-[200]   103 ms : http://www.google.co.kr/logos/doodles/2020/earth-day-2020-6753651837108357.3-l.png 
-[200]    38 ms : http://www.google.co.kr/textinputassistant/tia.png 
-[URL]   538 ms : http://google.co.kr 
+$ go-sitecheck -v http://httpbin.org/
+[200]   503 ms : http://httpbin.org/
+[200]   413 ms : https://fonts.googleapis.com/css?family=Open+Sans:400,700|Source+Code+Pro:300,600|Titillium+Web:400,600,700
+[200]    25 ms : http://httpbin.org/flasgger_static/swagger-ui.css
+[200]     9 ms : http://httpbin.org/static/favicon.ico
+[200]   141 ms : http://httpbin.org/flasgger_static/swagger-ui-bundle.js
+[200]    59 ms : http://httpbin.org/flasgger_static/swagger-ui-standalone-preset.js
+[200]    19 ms : http://httpbin.org/flasgger_static/lib/jquery.min.js
+[200]  1223 ms : http://httpbin.org/
 
-./go-sitecheck -t 2 -v http://google.co.kr
-[200]    75 ms : http://www.google.co.kr/textinputassistant/tia.png 
-[200]    98 ms : http://www.google.co.kr/logos/doodles/2020/earth-day-2020-6753651837108357.3-l.png 
-[URL]   439 ms : http://google.co.kr 
+$ go-sitecheck -v -t 2 http://httpbin.org/
+[200]   477 ms : http://httpbin.org/
+[200]    25 ms : http://httpbin.org/flasgger_static/swagger-ui.css
+[200]     8 ms : http://httpbin.org/static/favicon.ico
+[200]   145 ms : http://httpbin.org/flasgger_static/swagger-ui-bundle.js
+[200]    54 ms : http://httpbin.org/flasgger_static/swagger-ui-standalone-preset.js
+[200]    20 ms : http://httpbin.org/flasgger_static/lib/jquery.min.js
+[200]   411 ms : https://fonts.googleapis.com/css?family=Open+Sans:400,700|Source+Code+Pro:300,600|Titillium+Web:400,600,700
+[200]   934 ms : http://httpbin.org/
 
+$ go-sitecheck -t 2 -json http://httpbin.org/ http://httpbin.org/get
+{"url":"http://httpbin.org/","status_code":200,"duration_ms":833,"timestamp":"2020-04-22T19:20:09+09:00"}
 
-$./go-sitecheck -t 4 -v  http://google.co.kr http://daum.net
-[200]   129 ms : http://www.google.co.kr/textinputassistant/tia.png 
-[200]   165 ms : http://www.google.co.kr/logos/doodles/2020/earth-day-2020-6753651837108357.3-l.png 
-[URL]   505 ms : http://google.co.kr 
-
-[200]    14 ms : https://search.daum.net/OpenSearch.xml 
-[200]    36 ms : https://t1.daumcdn.net/adfit/static/ad.min.js 
-[200]    42 ms : https://t1.daumcdn.net/adfit/static/ad-native.min.js?ver=201901201 
-[200]     6 ms : https://t1.daumcdn.net/daumtop_deco/scripts/201905281455/daum_pctop.tm.min.js 
-[200]    43 ms : https://t1.daumcdn.net/kas/static/ba.min.js 
-[200]    29 ms : https://t1.daumcdn.net/daumtop_deco/scripts/202004211148/top.js 
-[200]     3 ms : https://t1.daumcdn.net/b2/ssp/awsa.js?ver=20190920 
-[200]     3 ms : https://t1.daumcdn.net/daumtop_chanel/op/20170315064553027.png 
-[200]     3 ms : https://t1.daumcdn.net/daumtop_deco/banner/p_cafe_onlineclass.png 
-[200]   900 ms : https://img2.daumcdn.net/thumb/C308x188/?fname=https://t1.daumcdn.net/section/oc/319485bacdd1424dbec1079e628d7115 
-[200]   902 ms : https://img2.daumcdn.net/thumb/C308x188/?fname=https://t1.daumcdn.net/section/oc/c2b65349a1b04f5895c9e0f0c9716087 
-[200]   905 ms : https://img2.daumcdn.net/thumb/C308x188/?fname=https://t1.daumcdn.net/section/oc/87fe9ca491e449ba926f5477e7007631 
-[200]   904 ms : https://img2.daumcdn.net/thumb/C308x188/?fname=https://t1.daumcdn.net/section/oc/095a0389cfe4417b93b5189b07c613f4 
-[200]     2 ms : https://t1.daumcdn.net/daumtop_deco/images/op/default.png 
-[200]     4 ms : https://t1.daumcdn.net/daumtop_deco/images/op/default%402x.png 
-[200]     7 ms : https://img2.daumcdn.net/thumb/C308x188/?fname=https://t1.daumcdn.net/daumtop_chanel/tromm/20200422113142732 
-[200]     6 ms : https://img2.daumcdn.net/thumb/C308x188/?fname=https://t1.daumcdn.net/section/oc/d45008c262b24d30b81b2b63f7345d6c 
-[200]     2 ms : https://t1.daumcdn.net/daumtop_deco/images/op/noimg_1x1.png 
-[200]     2 ms : https://t1.daumcdn.net/daumtop_deco/images/top/2017/logo_foot.gif 
-[URL]  1102 ms : http://daum.net 
+$ go-sitecheck -t 2 -json http://httpbin.org/ http://httpbin.org/get
+{"url":"http://httpbin.org/","status_code":200,"duration_ms":3799,"timestamp":"2020-04-22T19:21:20+09:00"}
+{"url":"http://httpbin.org/get","status_code":200,"duration_ms":625,"timestamp":"2020-04-22T19:21:24+09:00"}
 
 ```
 
