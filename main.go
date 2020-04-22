@@ -46,7 +46,7 @@ func Visit(url string, threads int, verbose bool) {
 	q.Run(c)
 	duration := time.Now().Sub(start)
 
-	fmt.Printf("[TOT] %5d ms : %s \n", duration.Milliseconds(), url)
+	fmt.Printf("[URL] %5d ms : %s \n", duration.Milliseconds(), url)
 }
 
 type Args struct {
