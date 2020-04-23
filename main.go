@@ -6,15 +6,17 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/dustin/go-humanize"
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/queue"
 )
 
 type Site struct {
-	Url       string `json:"url"`
-	Status    int    `json:"status_code"`
-	Duration  int64  `json:"duration_ms"`
-	Timestamp string `json:"timestamp"`
+	Url        string `json:"url"`
+	Status     int    `json:"status_code"`
+	Duration   int64  `json:"duration_ms"`
+	ContentLen uint64 `json:"content_length"`
+	Timestamp  string `json:"timestamp"`
 }
 
 func SiteLog(site Site, json_out bool) {
@@ -22,7 +24,7 @@ func SiteLog(site Site, json_out bool) {
 		js, _ := json.Marshal(site)
 		fmt.Println(string(js))
 	} else {
-		fmt.Printf("[%3d] %5d ms : %s \n", site.Status, site.Duration, site.Url)
+		fmt.Printf("[%3d][%7s][%4d ms] %s \n", site.Status, humanize.Bytes(site.ContentLen), site.Duration, site.Url)
 	}
 }
 
@@ -50,13 +52,16 @@ func OnRequest(c *colly.Collector) {
 }
 
 // OnRequest ..
-func OnResponse(mainSite *Site, verbose bool, json_out bool, c *colly.Collector, q *queue.Queue) {
+func OnResponse(mainSite *Site, tot_contentlength *uint64, verbose bool, json_out bool, c *colly.Collector, q *queue.Queue) {
 	c.OnResponse(func(r *colly.Response) {
 		u := r.Request.URL.String()
 		start := r.Ctx.GetAny(u)
+		contentlength := uint64(len(r.Body))
+		*tot_contentlength += contentlength
+
 		if start != nil {
 			duration := time.Now().Sub(start.(time.Time))
-			site := Site{u, r.StatusCode, duration.Milliseconds(), time.Now().Format(time.RFC3339)}
+			site := Site{u, r.StatusCode, duration.Milliseconds(), contentlength, time.Now().Format(time.RFC3339)}
 
 			if u == mainSite.Url {
 				*mainSite = site
@@ -84,23 +89,27 @@ func Visit(url string, threads int, verbose bool, json_out bool) {
 	OnHTML("script", "src", c, q)
 	OnHTML("img", "src", c, q)
 
+	tot_contentlength := uint64(0)
+
 	OnRequest(c)
-	OnResponse(&mainSite, verbose, json_out, c, q)
+	OnResponse(&mainSite, &tot_contentlength, verbose, json_out, c, q)
 
 	q.AddURL(url)
 	start := time.Now()
 	q.Run(c)
 	duration := time.Now().Sub(start)
 	mainSite.Duration = duration.Milliseconds()
+	mainSite.ContentLen = tot_contentlength
 
 	SiteLog(mainSite, json_out)
 }
 
 type Args struct {
-	Threads int
-	Verbose bool
-	Json    bool
-	Urls    []string
+	Threads       int
+	Verbose       bool
+	Json          bool
+	ContentLength int64
+	Urls          []string
 }
 
 func usage() (Args, bool) {
