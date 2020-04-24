@@ -24,7 +24,7 @@ func SiteLog(site Site, json_out bool) {
 		js, _ := json.Marshal(site)
 		fmt.Println(string(js))
 	} else {
-		fmt.Printf("[%3d][%7s][%4d ms] %s \n", site.Status, humanize.Bytes(site.ContentLen), site.Duration, site.Url)
+		fmt.Printf("[%3d] %7s [%4d ms] %s \n", site.Status, humanize.Bytes(site.ContentLen), site.Duration, site.Url)
 	}
 }
 
