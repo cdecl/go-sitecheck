@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"net/http"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/dustin/go-humanize"
@@ -95,8 +98,27 @@ func OnError(mainSite *Site, totcontentlength *uint64, args Args, c *colly.Colle
 	})
 }
 
+// AddURL ...
+func AddURL(rawurl string, args Args, q *queue.Queue) {
+	headers := &http.Header{}
+
+	for _, h := range args.Headers {
+		keyval := strings.Split(h, ":")
+		if len(keyval) == 2 {
+			headers.Set(keyval[0], keyval[1])
+		}
+	}
+
+	u, _ := url.Parse(rawurl)
+	q.AddRequest(&colly.Request{
+		URL:     u,
+		Method:  args.Method,
+		Headers: headers,
+	})
+}
+
 // Visit ..
-func Visit(url string, args Args) {
+func Visit(rawurl string, args Args) {
 	c := colly.NewCollector(
 		colly.MaxDepth(1),
 	)
@@ -105,7 +127,7 @@ func Visit(url string, args Args) {
 	q, _ := queue.New(args.Threads, &queue.InMemoryQueueStorage{MaxSize: 1000})
 
 	mainSite := Site{}
-	mainSite.Url = url
+	mainSite.Url = rawurl
 	totcontentlength := uint64(0)
 
 	OnHTML("link", "href", c, q)
@@ -116,7 +138,8 @@ func Visit(url string, args Args) {
 	OnResponse(&mainSite, &totcontentlength, args, c, q)
 	OnError(&mainSite, &totcontentlength, args, c)
 
-	q.AddURL(url)
+	AddURL(rawurl, args, q)
+
 	start := time.Now()
 	q.Run(c)
 	duration := time.Now().Sub(start)
@@ -126,13 +149,25 @@ func Visit(url string, args Args) {
 	siteLogging(mainSite, args.Json)
 }
 
+type ArrFlags []string
 type Args struct {
 	Threads       int
 	Verbose       bool
 	Json          bool
 	ContentLength int64
 	Timeout       int
+	Headers       ArrFlags
+	Method        string
 	Urls          []string
+}
+
+func (i *ArrFlags) String() string {
+	return "my string representation"
+}
+
+func (i *ArrFlags) Set(value string) error {
+	*i = append(*i, value)
+	return nil
 }
 
 func usage() (Args, bool) {
@@ -143,7 +178,9 @@ func usage() (Args, bool) {
 	flag.BoolVar(&args.Verbose, "v", false, "verbose")
 	flag.BoolVar(&args.Json, "json", false, "json output")
 	flag.IntVar(&args.Timeout, "m", 10, "request timeout sec")
-	flag.Bool("", false, "ver. 200427")
+	flag.StringVar(&args.Method, "x", "GET", "request method")
+	flag.Var(&args.Headers, "H", "add headers[]")
+	flag.Bool("", false, "ver. 200427.2")
 	flag.Parse()
 
 	args.Urls = append(args.Urls, flag.Args()...)

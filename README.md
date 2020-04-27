@@ -19,14 +19,20 @@ $ cd go-sitecheck
 $ go build
 ```
 
+### Dependency
+- https://github.com/gocolly/colly
+- https://github.com/dustin/go-humanize
+
 ## Running the tests
 
 - Usage
 
 ```
-$  go-sitecheck
-Usage of go-sitecheck:
-  -     ver. 200427
+$ go-sitecheck.exe
+Usage of go-sitecheck.exe:
+  -     ver. 200427.2
+  -H value
+        add headers[]
   -json
         json output
   -m int
@@ -34,6 +40,8 @@ Usage of go-sitecheck:
   -t int
         thread pool count (default 1)
   -v    verbose
+  -x string
+        request method (default "GET")
 ```
 
 - Run
