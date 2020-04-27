@@ -19,8 +19,8 @@ type Site struct {
 	Timestamp  string `json:"timestamp"`
 }
 
-func SiteLog(site Site, json_out bool) {
-	if json_out {
+func siteLogging(site Site, jsonout bool) {
+	if jsonout {
 		js, _ := json.Marshal(site)
 		fmt.Println(string(js))
 	} else {
@@ -52,12 +52,12 @@ func OnRequest(c *colly.Collector) {
 }
 
 // OnRequest ..
-func OnResponse(mainSite *Site, tot_contentlength *uint64, verbose bool, json_out bool, c *colly.Collector, q *queue.Queue) {
+func OnResponse(mainSite *Site, totcontentlength *uint64, args Args, c *colly.Collector, q *queue.Queue) {
 	c.OnResponse(func(r *colly.Response) {
 		u := r.Request.URL.String()
 		start := r.Ctx.GetAny(u)
 		contentlength := uint64(len(r.Body))
-		*tot_contentlength += contentlength
+		*totcontentlength += contentlength
 
 		if start != nil {
 			duration := time.Now().Sub(start.(time.Time))
@@ -67,41 +67,63 @@ func OnResponse(mainSite *Site, tot_contentlength *uint64, verbose bool, json_ou
 				*mainSite = site
 			}
 
-			if verbose {
-				SiteLog(site, json_out)
+			if args.Verbose {
+				siteLogging(site, args.Json)
 			}
 		}
 	})
 }
 
+// OnError ..
+func OnError(mainSite *Site, totcontentlength *uint64, args Args, c *colly.Collector) {
+	c.OnError(func(r *colly.Response, err error) {
+		u := r.Request.URL.String()
+		start := r.Ctx.GetAny(u)
+		contentlength := uint64(len(r.Body))
+		*totcontentlength += contentlength
+
+		duration := time.Now().Sub(start.(time.Time))
+		site := Site{u, r.StatusCode, duration.Milliseconds(), contentlength, time.Now().Format(time.RFC3339)}
+
+		if u == mainSite.Url {
+			*mainSite = site
+		}
+
+		if args.Verbose {
+			siteLogging(site, args.Json)
+		}
+	})
+}
+
 // Visit ..
-func Visit(url string, threads int, verbose bool, json_out bool) {
+func Visit(url string, args Args) {
 	c := colly.NewCollector(
 		colly.MaxDepth(1),
 	)
+	c.SetRequestTimeout(time.Duration(args.Timeout) * time.Second)
 
-	q, _ := queue.New(threads, &queue.InMemoryQueueStorage{MaxSize: 1000})
+	q, _ := queue.New(args.Threads, &queue.InMemoryQueueStorage{MaxSize: 1000})
 
 	mainSite := Site{}
 	mainSite.Url = url
+	totcontentlength := uint64(0)
 
 	OnHTML("link", "href", c, q)
 	OnHTML("script", "src", c, q)
 	OnHTML("img", "src", c, q)
 
-	tot_contentlength := uint64(0)
-
 	OnRequest(c)
-	OnResponse(&mainSite, &tot_contentlength, verbose, json_out, c, q)
+	OnResponse(&mainSite, &totcontentlength, args, c, q)
+	OnError(&mainSite, &totcontentlength, args, c)
 
 	q.AddURL(url)
 	start := time.Now()
 	q.Run(c)
 	duration := time.Now().Sub(start)
 	mainSite.Duration = duration.Milliseconds()
-	mainSite.ContentLen = tot_contentlength
+	mainSite.ContentLen = totcontentlength
 
-	SiteLog(mainSite, json_out)
+	siteLogging(mainSite, args.Json)
 }
 
 type Args struct {
@@ -109,6 +131,7 @@ type Args struct {
 	Verbose       bool
 	Json          bool
 	ContentLength int64
+	Timeout       int
 	Urls          []string
 }
 
@@ -119,6 +142,8 @@ func usage() (Args, bool) {
 	flag.IntVar(&args.Threads, "t", 1, "thread pool count")
 	flag.BoolVar(&args.Verbose, "v", false, "verbose")
 	flag.BoolVar(&args.Json, "json", false, "json output")
+	flag.IntVar(&args.Timeout, "m", 10, "request timeout sec")
+	flag.Bool("", false, "ver. 200427")
 	flag.Parse()
 
 	args.Urls = append(args.Urls, flag.Args()...)
@@ -137,7 +162,7 @@ func main() {
 	}
 
 	for _, url := range args.Urls {
-		Visit(url, args.Threads, args.Verbose, args.Json)
+		Visit(url, args)
 
 		if args.Verbose {
 			fmt.Println()
