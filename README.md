@@ -30,7 +30,7 @@ $ go build
 ```
 $ go-sitecheck.exe
 Usage of go-sitecheck.exe:
-  -     ver. 200427.2
+  -     ver. 200428.0
   -H value
         add headers[]
   -json
@@ -39,6 +39,8 @@ Usage of go-sitecheck.exe:
         request timeout sec (default 10)
   -t int
         thread pool count (default 1)
+  -tag string
+        add tag
   -v    verbose
   -x string
         request method (default "GET")
@@ -70,6 +72,9 @@ $ go-sitecheck -v -t 2 http://httpbin.org/
 
 $ go-sitecheck -t 2 -json http://httpbin.org/
 {"url":"http://httpbin.org/","status_code":200,"duration_ms":1942,"content_length":2120172,"timestamp":"2020-04-23T18:21:39+09:00"}
+
+$ go-sitecheck -t 2 -tag httptest -json http://httpbin.org/
+{"url":"http://httpbin.org/","status_code":200,"duration_ms":1095,"content_length":2120172,"tag":"httptest","timestamp":"2020-04-28T13:02:21+09:00"}
 
 $ go-sitecheck -t 2 -json http://httpbin.org/ http://httpbin.org/get
 {"url":"http://httpbin.org/","status_code":200,"duration_ms":886,"content_length":2120172,"timestamp":"2020-04-23T18:22:05+09:00"}

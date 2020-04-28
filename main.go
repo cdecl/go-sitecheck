@@ -19,6 +19,7 @@ type Site struct {
 	Status     int    `json:"status_code"`
 	Duration   int64  `json:"duration_ms"`
 	ContentLen uint64 `json:"content_length"`
+	Tag        string `json:"tag"`
 	Timestamp  string `json:"timestamp"`
 }
 
@@ -27,7 +28,7 @@ func siteLogging(site Site, jsonout bool) {
 		js, _ := json.Marshal(site)
 		fmt.Println(string(js))
 	} else {
-		fmt.Printf("[%3d] %7s [%4d ms] %s \n", site.Status, humanize.Bytes(site.ContentLen), site.Duration, site.Url)
+		fmt.Printf("[%3d] %7s [%4d ms] %s %s \n", site.Status, humanize.Bytes(site.ContentLen), site.Duration, site.Tag, site.Url)
 	}
 }
 
@@ -64,7 +65,7 @@ func OnResponse(mainSite *Site, totcontentlength *uint64, args Args, c *colly.Co
 
 		if start != nil {
 			duration := time.Now().Sub(start.(time.Time))
-			site := Site{u, r.StatusCode, duration.Milliseconds(), contentlength, time.Now().Format(time.RFC3339)}
+			site := Site{u, r.StatusCode, duration.Milliseconds(), contentlength, args.Tag, time.Now().Format(time.RFC3339)}
 
 			if u == mainSite.Url {
 				*mainSite = site
@@ -86,7 +87,7 @@ func OnError(mainSite *Site, totcontentlength *uint64, args Args, c *colly.Colle
 		*totcontentlength += contentlength
 
 		duration := time.Now().Sub(start.(time.Time))
-		site := Site{u, r.StatusCode, duration.Milliseconds(), contentlength, time.Now().Format(time.RFC3339)}
+		site := Site{u, r.StatusCode, duration.Milliseconds(), contentlength, args.Tag, time.Now().Format(time.RFC3339)}
 
 		if u == mainSite.Url {
 			*mainSite = site
@@ -158,6 +159,7 @@ type Args struct {
 	Timeout       int
 	Headers       ArrFlags
 	Method        string
+	Tag           string
 	Urls          []string
 }
 
@@ -179,8 +181,9 @@ func usage() (Args, bool) {
 	flag.BoolVar(&args.Json, "json", false, "json output")
 	flag.IntVar(&args.Timeout, "m", 10, "request timeout sec")
 	flag.StringVar(&args.Method, "x", "GET", "request method")
+	flag.StringVar(&args.Tag, "tag", "", "add tag")
 	flag.Var(&args.Headers, "H", "add headers[]")
-	flag.Bool("", false, "ver. 200427.2")
+	flag.Bool("", false, "ver. 200428.0")
 	flag.Parse()
 
 	args.Urls = append(args.Urls, flag.Args()...)
